@@ -40,10 +40,12 @@ get '/songs' do
 end
 
 get '/songs/new' do
-#    halt(401, 'Not Authorized') unless session[:admin]
-#    @song = Song.new
-#    slim :new_song
-    protected!
+    unless session[:admin]
+      protected!
+    else
+      @song = Song.new
+      slim :new_song
+    end
 end
 
 get '/songs/:id' do

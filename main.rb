@@ -5,10 +5,12 @@ require './song'
 require 'sinatra/flash'
 require 'pony'
 require './sinatra/auth'
+require 'v8'
+require 'coffee-script'
 
 configure do
     enable :sessions
-    set :username, 'frank'
+    set :username, 'kltduong'
     set :password, 'sinatra'
 end
 
@@ -61,6 +63,7 @@ helpers do
 end
 
 get ('/styles.css') {scss :styles}
+get('/javascripts/application.js') {coffee :application}
 
 get '/' do
   slim :home

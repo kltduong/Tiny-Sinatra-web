@@ -7,7 +7,7 @@ input#length type="number" name="song[length]" value="#{@song.length}"
 br
 br
 label for="released_on" Date(mm/dd/yyyy): 
-input#release_on type="text" name="song[released_on]" value="#{@song.released_on.strftime("%m/%d/%Y") if @song.released_on}"
+input#released_on type="text" name="song[released_on]" value="#{@song.released_on.strftime("%m/%d/%Y") if @song.released_on}"
 br
 br
 label for="lyrics" Lyrics: 
