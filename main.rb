@@ -4,6 +4,7 @@ require 'sass'
 require './song'
 require 'sinatra/flash'
 require 'pony'
+require './sinatra/auth'
 
 configure do
     enable :sessions
