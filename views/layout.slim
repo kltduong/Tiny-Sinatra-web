@@ -1,12 +1,13 @@
 doctype html
 html lang="en"
   head
-    title== @title || "Vietnamese songs page"
+    title== @title
     meta charset="utf-8"
-    link rel="stylesheet" href="styles.css"
+    == css :styles
   body
     header
       h1 Vietnamese songs
       == slim :nav
     section
+    == styled_flash
     == yield
