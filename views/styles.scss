@@ -67,4 +67,19 @@ p {
     border: 1px solid $red;
 }
 
+#like {
+  p {
+    font-weight: bold;
+    color: $red;
+  }
+  input {
+    background: url(/images/like.png) 0 1px no-repeat;
+    border: darken($red, 10%) 1px solid;
+    height: 28px;
+    width: 70px;
+    padding-left: 41px;
+  }
+}
+
+
 label {display: block;}
