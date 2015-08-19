@@ -1,5 +1,9 @@
 # This file is used by Rack-based servers to start the application.
 
 #require ::File.expand_path('../config/environment',  __FILE__)
+require 'sinatra/base'
 require './main'
-run Sinatra::Application
+require './song'
+
+map('/songs') {run SongController}
+map('/') {run Website}

@@ -1,4 +1,4 @@
-require 'sinatra'
+require 'sinatra/base'
 require 'slim'
 require 'sass'
 require './song'
@@ -8,119 +8,126 @@ require './sinatra/auth'
 require 'v8'
 require 'coffee-script'
 
-configure do
+class Website < Sinatra::Base
+  register Sinatra::Auth
+  register Sinatra::Flash
+
+  configure do
     enable :sessions
     set :username, 'kltduong'
     set :password, 'sinatra'
-end
+  end
 
-configure :development do
-    DataMapper.setup(:default, "sqlite3://#{Dir.pwd}/development.db")
-end
+  configure :development do
+    set :email_address => 'smtp.gmail.com',
+        :email_user_name => 'vtnusertest',
+        :email_password => 'Ph@ntuluan',
+        :email_domain => 'localhost.localdomain'
+  end
 
-configure :production do
-    DataMapper.setup(:default, ENV['DATABASE_URL'])
-end
+#  configure :development do
+#    DataMapper.setup(:default, "sqlite3://#{Dir.pwd}/development.db")
+#  end
 
-before do
+#  configure :production do
+#    DataMapper.setup(:default, ENV['DATABASE_URL'])
+#  end
+
+  before do
     set_title
-end
+  end
 
-helpers do
-    def css(*stylesheets)
-        stylesheets.map do |stylesheet|
-              "<link href=\"/#{stylesheet}.css\" media=\"screen, projection\" rel=\"stylesheet\" />"
-        end.join
-    end
+  def css(*stylesheets)
+    stylesheets.map do |stylesheet|
+      "<link href=\"/#{stylesheet}.css\" media=\"screen, projection\" rel=\"stylesheet\" />"
+    end.join
+  end
 
-    def current?(path='/')
-        (request.path == path || request.path == path+'/') ? "current" : nil
-    end
+  def current?(path='/')
+    (request.path == path || request.path == path+'/') ? "current" : nil
+  end
 
-    def set_title
-        @title ||= "About Vietnamese songs"
-    end
+  def set_title
+    @title ||= "About Vietnamese songs"
+  end
 
-    def send_message
-        Pony.mail({
-            :from => params[:name] + "<" + params[:email] + ">",
-            :to => 'kltduong@gmail.com',
-            :subject => params[:name] + " has contact you.",
-            :body => params[:message],
-            :via => :smtp,
-            :via_options => {
-                :address                => 'smtp.gmail.com',
-                :port                   => '587',
-                :enable_starttls_auto   => true,
-                :user_name              => 'vtnusertest',
-                :password               => 'Ph@ntuluan',
-                :authentication         => :plain,
-                :domain                 => 'localhost.localdomain'
-            }
-        })
-    end
+  def send_message
+    Pony.mail({
+      :from => params[:name] + "<" + params[:email] + ">",
+      :to => 'kltduong@gmail.com',
+      :subject => params[:name] + " has contact you.",
+      :body => params[:message],
+      :via => :smtp,
+      :via_options => {
+        :address                => 'smtp.gmail.com',
+        :port                   => '587',
+        :enable_starttls_auto   => true,
+        :user_name              => 'vtnusertest',
+        :password               => 'Ph@ntuluan',
+        :authentication         => :plain,
+        :domain                 => 'localhost.localdomain'
+      }
+    })
+  end
 
-end
+  get ('/styles.css') {scss :styles}
+  get('/javascripts/application.js') {coffee :application}
 
-get ('/styles.css') {scss :styles}
-get('/javascripts/application.js') {coffee :application}
+  get '/' do
+    slim :home
+  end
 
-get '/' do
-  slim :home
-end
+  get '/about' do
+    @title = "All About This Website"
+    slim :about
+  end
 
-get '/about' do
-  @title = "All About This Website"
-  slim :about
-end
+  get '/contact' do
+    slim :contact#, :layout => :special
+  end
 
-get '/contact' do
-  slim :contact#, :layout => :special
-end
-
-post '/contact' do
+  post '/contact' do
     send_message
     flash[:notice] = "Thank you for your message. You will be in touch soon."
     redirect to('/')
-end
+  end
 
-get '/instance' do
-  @name = "DAZ"
-  slim :show
-end
+  get '/instance' do
+    @name = "DAZ"
+    slim :show
+  end
 
-get '/set/:name' do
+  get '/set/:name' do
     session[:name] = params[:name]
-end
+  end
 
-get '/get/hello' do
+  get '/get/hello' do
     "Hello #{session[:name]}"
-end
+  end
 
-get '/login' do
+  get '/login' do
     slim :login
-end
+  end
 
-post '/login' do
+  post '/login' do
     if params[:username] == settings.username && params[:password] == settings.password
-        session[:admin] = true
-        redirect to('/songs')
+      session[:admin] = true
+      redirect to('/songs')
     else
-        slim :login
+      slim :login
     end
-end
+  end
 
-get '/logout' do
+  get '/logout' do
     session.clear
     redirect to('/login')
+  end
+
+  not_found do
+    slim :not_found
+  end
 end
 
-not_found do
-  slim :not_found
-end
-
-__END__
-
-@@show
-h1 Hello!
-== @name
+#@@show
+#h1 Hello!
+#== @name

@@ -1,88 +1,135 @@
+require 'sinatra/base'
 require 'dm-core'
 require 'dm-migrations'
-
-class Song
-    include DataMapper::Resource
-    property :id, Serial
-    property :title, String
-    property :lyrics, Text
-    property :length, Integer
-    property :released_on, Date
-    property :likes, Integer, :default => 0
-    
-    def released_on=date
-        super Date.strptime(date, '%m/%d/%Y')
-    end
-end
-
-DataMapper.finalize
+require 'slim'
+require 'sass'
+require 'sinatra/flash'
+require './sinatra/auth'
 
 module SongHelpers
-    def find_songs
-        @songs = Song.all
-    end
+  def find_songs
+    @songs = Song.all
+  end
 
-    def find_song
-        Song.get(params[:id])
-    end
+  def find_song
+    Song.get(params[:id])
+  end
 
-    def create_song
-        @song = Song.create(params[:song])
-    end
+  def create_song
+    @song = Song.create(params[:song])
+  end
 end
 
-helpers SongHelpers
+class SongController < Sinatra::Base
 
-get ('/songs/styles.css') {scss :styles}
+  enable :method_override
+  register Sinatra::Flash
+  register Sinatra::Auth
+  helpers SongHelpers
 
-get '/songs' do
+  configure do
+    enable :sessions
+    set :username, 'kltduong'
+    set :password, 'sinatra'
+  end
+
+  configure :development do
+    DataMapper.setup(:default, "sqlite3://#{Dir.pwd}/development.db")
+  end
+
+  configure :production do
+    DataMapper.setup(:default, ENV['DATABASE_URL'])
+  end
+
+  before do
+    set_title
+  end
+
+  def css(*stylesheets)
+    stylesheets.map do |stylesheet|
+      "<link href=\"#{stylesheet}.css\" media=\"screen, projection\" rel=\"stylesheet\" />"
+    end.join
+  end
+
+  def current?(path='/')
+    (request.path==path || request.path==path+'/') ? "current" : nil
+  end
+
+  def set_title
+    @title ||= "Songs By Sinatra"
+  end
+
+  get ('/styles.css') {scss :styles}
+
+  get '/' do
     find_songs
     slim :songs
-end
+  end
 
-get '/songs/new' do
+  get '/new' do
     unless session[:admin]
       protected!
     else
       @song = Song.new
       slim :new_song
     end
-end
+  end
 
-get '/songs/:id' do
+  get '/:id' do
     @song = find_song
     slim :show_song
-end
+  end
 
-get '/songs/:id/edit' do
+  get '/:id/edit' do
     @song = find_song
     slim :edit_song
-end
+  end
 
-post '/songs' do
+  post '/' do
     flash[:notice] = "Song successfully added" if create_song
     redirect to("/songs/#{@song.id}")
-end
+  end
 
-put '/songs/:id' do
+  put '/:id' do
     song = find_song
     if song.update(params[:song])
-        flash[:notice] = "Song successfully updated."
+      flash[:notice] = "Song successfully updated."
     end
     redirect to("/songs/#{song.id}")
-end
+  end
 
-delete '/songs/:id' do
+  delete '/:id' do
     if find_song.destroy
-        flash[:notice] = "Song deleted."
+      flash[:notice] = "Song deleted."
     end
     redirect to '/songs'
+  end
+
+  post '/:id/like' do
+    @song = find_song
+    @song.likes = @song.likes.next
+    @song.save
+    redirect to"/songs/#{@song.id}" unless request.xhr?
+    slim :like, :layout => false
+  end
+  
+
 end
 
-post '/songs/:id/like' do
-  @song = find_song
-  @song.likes = @song.likes.next
-  @song.save
-  redirect to"/songs/#{@song.id}" unless request.xhr?
-  slim :like, :layout => false
-end
+
+
+  
+#    include DataMapper::Resource
+#    property :id, Serial
+#    property :title, String
+#    property :lyrics, Text
+#    property :length, Integer
+#    property :released_on, Date
+#    property :likes, Integer, :default => 0
+#    
+#    def released_on=date
+#        super Date.strptime(date, '%m/%d/%Y')
+#    end
+#end
+#
+#DataMapper.finalize
